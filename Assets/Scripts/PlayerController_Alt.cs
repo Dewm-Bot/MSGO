@@ -379,9 +379,8 @@ namespace PlayerSystem
                 // could be replaced with a vector
                 float moveMag = new Vector2(moveInput.x, moveInput.y).magnitude;
                 animator.SetFloat("MoveSpeed", moveMag);
-                animator.SetBool("IsMovingBackward", pureBackward);
-                animator.SetBool("IsBoostingForward", isBoostingForward);
-                animator.SetBool("IsBoostingUp", isBoostingUp);
+                animator.SetFloat("DotForward", Vector3.Dot(desiredMove.normalized, modelRoot.forward));
+                animator.SetBool("IsBoosting", isBoostingForward || isBoostingUp);
                 animator.SetInteger("PlayerState", (int)currentState);
             }
         }
