@@ -27,13 +27,14 @@ namespace WeaponSystem
         private bool isCharging = false;
         private bool fired = false;
 
-        [SerializeField] GameObject projectile;
+        [SerializeField] GameObject projectile_tap;
+        [SerializeField] GameObject projectile_charge;
         [SerializeField] Projectile projectile_behavior;
         [SerializeField] Transform muzzle;
 
         private void Start()
         {
-            projectile_behavior = projectile.GetComponent<Projectile>();
+            projectile_behavior = projectile_charge.GetComponent<Projectile>();
         }
 
         public override void Activate(bool inputPress, bool inputHeld)
@@ -102,7 +103,7 @@ namespace WeaponSystem
 
             projectile_behavior.damage = finalDamage;
 
-            Transform shot = Instantiate(projectile).transform;
+            Transform shot = Instantiate(projectile_charge).transform;
             shot.position = muzzle.position;
             shot.rotation = muzzle.rotation;
         }
@@ -118,7 +119,7 @@ namespace WeaponSystem
 
             for (int burstShot = 0; burstShot < burstCount; burstShot++) 
             {
-                Transform shot = Instantiate(projectile).transform;
+                Transform shot = Instantiate(projectile_charge).transform;
                 shot.position = muzzle.position;
                 shot.rotation = muzzle.rotation;
             }

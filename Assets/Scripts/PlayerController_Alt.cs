@@ -121,6 +121,8 @@ namespace PlayerSystem
         private Vector3 initalCamRootPos;
         private float lastPressTime = 0;
 
+        public TorsoRotationAim_CameraPivot pivot;
+
         RaycastHit hit;
 
         void Awake()
@@ -442,6 +444,8 @@ namespace PlayerSystem
         // Passive state, entire body rotates in movement direction
         private void HandleWalkingRotation()
         {
+            pivot.enabled = false;
+
             Vector3 moveTarget = new Vector3(velocity.x, 0, velocity.z).normalized;
             moveTarget = new Vector3(moveTarget.x, 0, moveTarget.z) * horizontalVelocity;
             moveTarget = moveTarget.normalized;
@@ -461,6 +465,8 @@ namespace PlayerSystem
         // Fire state, torso aims in last fire direction, legs follow movement
         private void HandleFiringRotation()
         {
+            pivot.enabled = true;
+
             //modelRoot.rotation = Quaternion.Euler(0,cameraPivot.rotation.y,0);
             Vector3 lockForward = cameraPivot.forward;
             lockForward = new Vector3(lockForward.x, 0, lockForward.z);
@@ -479,6 +485,8 @@ namespace PlayerSystem
         // Boost movement state, body follows direction of movement at all times
         private void HandleBoostingRotation()
         {
+            pivot.enabled = false;
+
             Vector3 moveTarget = moveInput.x * cameraPivot.right + moveInput.y * cameraPivot.forward;
             moveTarget = new Vector3(moveTarget.x, 0, moveTarget.z);
             moveTarget = moveTarget.normalized;
@@ -498,6 +506,8 @@ namespace PlayerSystem
         // Boosting + Fire state, legs follow movement direction more heavily than usual
         private void HandleBoostingFiringRotation()
         {
+            pivot.enabled = true;
+
             //modelRoot.rotation = Quaternion.Euler(0,cameraPivot.rotation.y,0);
             Vector3 lockForward = cameraPivot.forward;
             lockForward = new Vector3(lockForward.x, 0, lockForward.z);

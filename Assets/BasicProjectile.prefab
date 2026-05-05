@@ -127,10 +127,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Projectile
   temp_char: {fileID: 0}
   cap_velocities: 0
-  max_velocity: {x: 0, y: 0, z: 0}
+  max_velocity: {x: 100, y: 0, z: 100}
   mask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 4294967295
   speed: 100
-  damage: 0
+  damage: 23.01588
   lifetime: 30
