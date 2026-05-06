@@ -121,7 +121,7 @@ namespace PlayerSystem
         private Vector3 initalCamRootPos;
         private float lastPressTime = 0;
 
-        public TorsoRotationAim_CameraPivot pivot;
+        public MonoBehaviour pivot;
 
         RaycastHit hit;
 
@@ -216,10 +216,14 @@ namespace PlayerSystem
             HandleMovementAndBoost();
             HandleWeaponSelection();
             HandleFiring();
-            HandleRotation();
-            HandleHeadRotation();
             RechargeBoostPool();
             AddCameraLag();
+        }
+
+        private void LateUpdate()
+        {
+            HandleRotation();
+            HandleHeadRotation();
         }
 
         #region State Management
@@ -603,10 +607,12 @@ namespace PlayerSystem
         private void SelectWeapon(int index)
         {
             if (index == currentWeaponIndex || index < 0 || index >= weapons.Count) return;
+            animator.SetBool("SwapWeapon", true);
             weapons[currentWeaponIndex]?.OnDeselect();  // deselect previous weapon
             muzzleTransform = null;                     // nullify the muzzle transform to forego torso adjustments
             currentWeaponIndex = index;                 // update index to current desired weapon
             weapons[currentWeaponIndex]?.OnSelect();    // select the current weapon
+            animator.SetBool("SwapWeapon", false);
         }
 
         private void OnFirePressed()
@@ -643,8 +649,13 @@ namespace PlayerSystem
             // Always calculate aim point when firing or holding fire
             if (firePressed || fireHeld)
             {
+                animator.SetBool("IsFiring", true);
                 lastAimPoint = CalculateAimPoint();
                 lastFireTime = Time.time;
+            }
+            else 
+            {
+                animator.SetBool("IsFiring", false);
             }
         }
 

@@ -9,7 +9,7 @@ public class TorsoRotationAim_CameraPivot : MonoBehaviour
     Vector3 distance;
 
     // differs from other torso rotation controller by purely matching the muzzle forward to the camera pivot forward by rotating the torso;
-    private void Update()
+    private void LateUpdate()
     {
         Vector3 cam_aim = cameraPivot.position + cameraPivot.forward * 1000.0f;
         distance = (cam_aim - muzzle.position).normalized;
