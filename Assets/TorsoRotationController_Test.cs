@@ -4,22 +4,21 @@ public class TorsoRotationController_Test : MonoBehaviour
 {
     public Transform modelRoot;
     public Transform torsoRoot;
-    public Transform camera;
+    public Transform currentCamera;
     public Transform muzzle;
 
-    public Vector3 distance;
+    public Vector3 distToTurn;
     Vector3 muzzleAim;
     Vector3 cameraAim;
     Quaternion targetRotation;
 
-    float maxTorsoAngle = 90.0f;
-    Quaternion initialTorsoLocalRot;
-    Quaternion currentTorsoRotation;
+    public Vector3 rotationOffset;
+
+    Quaternion inheretRotation;
 
     private void Awake()
     {
-        initialTorsoLocalRot = torsoRoot.localRotation;
-        currentTorsoRotation = torsoRoot.localRotation;
+        inheretRotation = Quaternion.Inverse(Quaternion.FromToRotation(torsoRoot.forward, muzzle.forward));
     }
 
     private void Update()
@@ -30,70 +29,55 @@ public class TorsoRotationController_Test : MonoBehaviour
         if (muzzle_hit.transform == null) { muzzleAim = muzzle.position + muzzle.forward * 1000f; }
 
         RaycastHit camera_hit;
-        Physics.Raycast(camera.position, camera.forward * 1000f, out camera_hit);
+        Physics.Raycast(currentCamera.position, currentCamera.forward * 1000f, out camera_hit);
         cameraAim = camera_hit.point;
-        if (camera_hit.transform == null) { cameraAim = camera.position + camera.forward * 1000f; }
+        if (camera_hit.transform == null) { cameraAim = currentCamera.position + currentCamera.forward * 1000f; }
     }
 
     private void LateUpdate()
     {
-        TorsoDirectAim();
-    }
-
-    private void ApplyTorsoAim(Vector3 worldAimDirection)
-    {
-        // 1. Convert aim direction into local bounding space of the model
-        Vector3 localAim = modelRoot.InverseTransformDirection(worldAimDirection);
-        if (localAim.sqrMagnitude < 0.0001f) localAim = Vector3.forward;
-        localAim.Normalize();
-
-        // 2. Extract yaw relative to the legs
-        float currentYaw = Mathf.Atan2(localAim.x, localAim.z) * Mathf.Rad2Deg;
-        float clampedYaw = Mathf.Clamp(currentYaw, -maxTorsoAngle, maxTorsoAngle);
-
-        // 3. Extract pitch (using Asin natively works for verticality relative to model)
-        float pitch = Mathf.Asin(localAim.y) * Mathf.Rad2Deg;
-
-        // 4. Construct a clamped local aim direction
-        Vector3 clampedLocalAim = Quaternion.Euler(-pitch, clampedYaw, 0f) * Vector3.forward;
-
-        // 5. Convert clamped aim back to world space
-        Vector3 clampedWorldAim = modelRoot.TransformDirection(clampedLocalAim);
-
-        // 6. Compute delta rotation from model's neutral forward to the clamped aim
-        Quaternion aimDelta = Quaternion.FromToRotation(modelRoot.forward, clampedWorldAim);
-
-        // 7. Apply this delta directly to the true rest pose of the torso bone in world space
-        Quaternion restWorldRot = torsoRoot.parent.rotation * initialTorsoLocalRot;
-        Quaternion targetWorldRot = aimDelta * restWorldRot;
-
-        // 8. Convert to pure local rotation and interpolate
-        Quaternion targetLocalRot = Quaternion.Inverse(torsoRoot.parent.rotation) * targetWorldRot;
-
-        currentTorsoRotation = Quaternion.Slerp(currentTorsoRotation, targetLocalRot, Time.deltaTime * 10.0f);
-        torsoRoot.localRotation = currentTorsoRotation;
+        Vector3 distance = (cameraAim - muzzle.position);
+        if (distance.magnitude > 0.1f)
+        {
+            TorsoDirectAim();
+        } else {
+            
+        }
     }
 
     private void TorsoDirectAim() 
     {
         //problem with this solution: Assumes muzzle is parallel to the torso
-        distance = (cameraAim - muzzle.position).normalized;
+        distToTurn = (cameraAim - torsoRoot.position).normalized;
         Vector3 offset = (torsoRoot.position - muzzle.position).normalized;
         //distance -= offset;
 
-        targetRotation = Quaternion.LookRotation(distance);
-        Quaternion inheretRotation = Quaternion.FromToRotation(torsoRoot.forward, muzzle.forward);
-        torsoRoot.rotation = Quaternion.Lerp(torsoRoot.rotation, targetRotation, 10.0f * Time.deltaTime);
+        targetRotation = Quaternion.LookRotation(distToTurn);
+        //torsoRoot.rotation = Quaternion.Lerp(torsoRoot.rotation, targetRotation, 10.0f * Time.deltaTime);
+        //this.transform.rotation = Quaternion.Lerp(torsoRoot.rotation, targetRotation * inheretRotation * Quaternion.Euler(rotationOffset), 100.0f * Time.deltaTime);
+        this.transform.rotation = targetRotation;
     }
 
     private void OnDrawGizmos()
     {
+
+        float distToCam = (cameraAim - torsoRoot.position).magnitude;
+
         Gizmos.color = Color.green;
 
-        Gizmos.DrawLine(torsoRoot.position, torsoRoot.position + torsoRoot.forward * 10.0f);
+        Gizmos.DrawLine(currentCamera.position, cameraAim);
+        Gizmos.DrawSphere(cameraAim, 2.0f);
+
+        Gizmos.color = Color.blue;
+
+        Gizmos.DrawLine(torsoRoot.position, torsoRoot.position + torsoRoot.forward * distToCam);
+
+        Gizmos.color = Color.orange;
+        Gizmos.DrawLine(muzzle.position, muzzle.position + muzzle.forward * distToCam);
 
         Gizmos.color = Color.red;
-        Gizmos.DrawLine(muzzle.position, muzzle.position + muzzle.forward * 10.0f);
+
+        Gizmos.DrawLine(muzzle.position + muzzle.forward * distToCam, cameraAim);
 
     }
 

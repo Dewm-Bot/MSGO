@@ -82,7 +82,6 @@ namespace PlayerSystem
         [HideInInspector] public float currentHealth;
 
         [Header("Weapons")]
-        private float fireCooldown = 0f;
         [Tooltip("Up to 6 Weapon ScriptableObjects.")]
         public List<Equipment> weapons = new List<Equipment>();
         private int currentWeaponIndex = 0;
@@ -121,7 +120,7 @@ namespace PlayerSystem
         private Vector3 initalCamRootPos;
         private float lastPressTime = 0;
 
-        public MonoBehaviour pivot;
+        public TorsoRotationController_Test torso_script;
 
         RaycastHit hit;
 
@@ -447,7 +446,7 @@ namespace PlayerSystem
         // Passive state, entire body rotates in movement direction
         private void HandleWalkingRotation()
         {
-            pivot.enabled = false;
+            torso_script.enabled = false;
 
             Vector3 moveTarget = new Vector3(velocity.x, 0, velocity.z).normalized;
             moveTarget = new Vector3(moveTarget.x, 0, moveTarget.z) * horizontalVelocity;
@@ -468,7 +467,7 @@ namespace PlayerSystem
         // Fire state, torso aims in last fire direction, legs follow movement
         private void HandleFiringRotation()
         {
-            pivot.enabled = true;
+            torso_script.enabled = true;
 
             //modelRoot.rotation = Quaternion.Euler(0,cameraPivot.rotation.y,0);
             Vector3 lockForward = cameraPivot.forward;
@@ -488,7 +487,7 @@ namespace PlayerSystem
         // Boost movement state, body follows direction of movement at all times
         private void HandleBoostingRotation()
         {
-            pivot.enabled = false;
+            torso_script.enabled = false;
 
             Vector3 moveTarget = moveInput.x * cameraPivot.right + moveInput.y * cameraPivot.forward;
             moveTarget = new Vector3(moveTarget.x, 0, moveTarget.z);
@@ -509,7 +508,7 @@ namespace PlayerSystem
         // Boosting + Fire state, legs follow movement direction more heavily than usual
         private void HandleBoostingFiringRotation()
         {
-            pivot.enabled = true;
+            torso_script.enabled = true;
 
             //modelRoot.rotation = Quaternion.Euler(0,cameraPivot.rotation.y,0);
             Vector3 lockForward = cameraPivot.forward;
@@ -527,7 +526,7 @@ namespace PlayerSystem
 
         private void HandleHeadRotation()
         {
-            // Smoothly rotate head to target
+            // Smoothly rotate head to targets
             Quaternion targetHeadRotation = modelRoot.rotation;
             float headDot = Vector3.Dot(cameraPivot.forward, modelRoot.forward); // check if the model is facing the same direction as the camera
             bool headTrack = (headDot >= -0.1f) ? true : false; // if the model is not parallel (1.0) or perpendicular (0.0, -0.1 for tolerance issues) with the forward direction, disable headtracking
