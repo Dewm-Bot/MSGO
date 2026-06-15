@@ -15,10 +15,10 @@ public class ActorCharacter : MonoBehaviour
 	public CharacterController actorChar;  // actual character controller for moving characters
 	public Animator actorAnim;             // animation handler
 
-	protected Vector2 moveInput = Vector2.zero;
-	protected Vector2 lookInput = Vector2.zero;
-	protected Vector3 desiredMove = Vector3.zero;
-	protected Vector3 velocity;
+	public Vector2 moveInput = Vector2.zero;
+	public Vector2 lookInput = Vector2.zero;
+	public Vector3 desiredMove = Vector3.zero;
+	public Vector3 velocity;
 
 	[Header("Movement Settings")]
 	public float walkSpeed = 4f;
@@ -49,7 +49,7 @@ public class ActorCharacter : MonoBehaviour
 
 	virtual protected void Awake()
 	{
-		actorChar = GetComponent<CharacterController>();
+		actorChar = (actorChar == null) ? GetComponent<CharacterController>() : actorChar;
 		actorAnim = GetComponent<Animator>();
 
 		//AssignControls();

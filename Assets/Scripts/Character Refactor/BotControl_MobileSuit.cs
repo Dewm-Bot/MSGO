@@ -1,6 +1,7 @@
 using UnityEngine;
 
-public class Bot_MobileSuit : MonoBehaviour
+[RequireComponent(typeof(CharacterController))]
+public class BotControl_MobileSuit : MonoBehaviour
 {
     public ActorCharacter_MobileSuit ActorMS;
 

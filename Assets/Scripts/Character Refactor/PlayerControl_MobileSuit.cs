@@ -1,6 +1,7 @@
 using UnityEngine;
 
-public class Player_MobileSuit : MonoBehaviour
+[RequireComponent(typeof(CharacterController))]
+public class PlayerControl_MobileSuit : MonoBehaviour
 {
     // Divergent from diagram out of necessity, I don't know what I was thinking with the node-based system
     [Header("References")]
@@ -8,7 +9,16 @@ public class Player_MobileSuit : MonoBehaviour
     public Transform cameraPivot;          // Where our camera will be pivoted around
     public Camera mainCamera;              // Our primary camera, should be a child of CameraPivot
 
+    [Header("Camera / Look Settings")]
+    public float lookSensitivity = 1.2f;
+    public float minPitch = -35f;
+    public float maxPitch = 60f;
+    private float yaw;
+    private float pitch;
+
     private PlayerControls.PlayerControlsClass controls;
+
+    Vector2 lookInput;
 
     void Awake()
     {
@@ -19,6 +29,8 @@ public class Player_MobileSuit : MonoBehaviour
 
         controls.Player.Look.performed += ctx => ActorMS.SetLookInput(ctx.ReadValue<Vector2>());
         controls.Player.Look.canceled += ctx => ActorMS.SetLookInput(Vector2.zero);
+        controls.Player.Look.performed += ctx => lookInput = ctx.ReadValue<Vector2>();
+        controls.Player.Look.canceled += ctx => lookInput = (Vector2.zero);
 
         controls.Player.Fire.performed += ctx => ActorMS.OnFirePressed();
         controls.Player.Fire.canceled += ctx => ActorMS.OnFireReleased();
@@ -46,9 +58,36 @@ public class Player_MobileSuit : MonoBehaviour
         ActorMS.SetRotationRoot(cameraPivot);
     }
 
+    void OnEnable() => controls.Enable();
+    void OnDisable() => controls.Disable();
+
     void Update()
     {
+        HandleLook();
         ActorMS.SetAimPoint(CalculateAimPoint());
+
+        // Toggle cursor lock with Escape
+        if (UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
+    }
+
+    private void HandleLook()
+    {
+        yaw += lookInput.x * lookSensitivity;
+        pitch -= lookInput.y * lookSensitivity;
+        pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+        cameraPivot.rotation = Quaternion.Euler(pitch, yaw, 0f);
     }
 
     private Vector3 CalculateAimPoint()

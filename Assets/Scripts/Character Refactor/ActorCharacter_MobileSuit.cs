@@ -57,7 +57,9 @@ public class ActorCharacter_MobileSuit : ActorCharacter
     public float legsCatchUpSpeed = 5f;
     private Quaternion currentTorsoRotation = Quaternion.identity;    // Current torso rotation in local space
 
-    //buh
+    [Header("Health")]
+    public float maxHealth = 100f;
+    [HideInInspector] public float currentHealth;
 
     [Tooltip("If true, torso aiming uses the camera aim ray / aim point (recommended). If false, uses camera forward.")]
     public bool aimTorsoAtAimPoint = true;
@@ -80,13 +82,23 @@ public class ActorCharacter_MobileSuit : ActorCharacter
     public Vector3 lastAimPoint;
     private float lastPressTime = 0;
 
+    protected override void Awake()
+    {
+        base.Awake();
+        currentHealth = maxHealth;
+        boostPool = maxBoostPool;
+        boostBarUI.SetBoost(boostPool, maxBoostPool);
+        healthBarUI.SetHealth(currentHealth, maxHealth);
+    }
+
     override public void HandleUpdate()
 	{
 		HandleMovement();
 		HandleBoost();
 		HandleAnimation();
         HandleRotation();
-	}
+        RechargeBoostPool();
+    }
 
 	override public void HandleAnimation() 
     {
