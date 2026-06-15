@@ -7,10 +7,9 @@ public class ActorCharacter : MonoBehaviour
 		// to be filled by inhereted classes
 	}
 
-	// script for taking generalized inputs and translating it to proper articulation
-	[Header("Actor References")]
-	public ActorInput actorInputs;  // universal input acceptance for bot or player
-	public Transform look_pos;
+	[Header("References")]
+	protected Transform rotationRoot;          // Where our camera will be pivoted around
+	protected Vector3 aimPoint;              // Our primary camera, should be a child of rotationRoot
 
 	// Components
 	public CharacterController actorChar;  // actual character controller for moving characters
@@ -37,7 +36,7 @@ public class ActorCharacter : MonoBehaviour
 	// Input System
 	protected PlayerControls.PlayerControlsClass controls;
 
-	virtual protected void AssignControls() 
+	virtual public void AssignControls() 
 	{
 		controls = new PlayerControls.PlayerControlsClass();
 
@@ -53,13 +52,11 @@ public class ActorCharacter : MonoBehaviour
 		actorChar = GetComponent<CharacterController>();
 		actorAnim = GetComponent<Animator>();
 
-		AssignControls();
+		//AssignControls();
 	}
 
-	void Update()
+	virtual protected void Update()
 	{
-		look_pos = actorInputs.look_pos;
-
 		HandleUpdate();
 
 		// Move CharacterController
@@ -67,11 +64,16 @@ public class ActorCharacter : MonoBehaviour
 		actorChar.Move(velocity * Time.deltaTime);
 	}
 
-	protected void HandleMovement()
+	virtual protected void LateUpdate() 
+	{
+	
+	}
+
+	public void HandleMovement()
 	{
 		// Compute camera-relative forward & right (flatten Y)
-		Vector3 lookForward = look_pos.forward;
-		Vector3 lookRight = look_pos.right;
+		Vector3 lookForward = rotationRoot.forward;
+		Vector3 lookRight = rotationRoot.right;
 		lookForward.y = 0f;
 		lookRight.y = 0f;
 		lookForward.Normalize();
@@ -85,13 +87,33 @@ public class ActorCharacter : MonoBehaviour
 		bool pureBackward = (moveInput.y < 0f && Mathf.Abs(moveInput.x) < 0.1f);
 	}
 
-	virtual protected void HandleAnimation(){
+	virtual public void HandleAnimation(){
 
 	}
 
-	virtual protected void HandleUpdate() 
+	virtual public void HandleUpdate() 
 	{
 		HandleMovement();
 		HandleAnimation();
+	}
+
+	public void SetMoveInput(Vector2 mi) 
+	{
+		moveInput = mi;
+	}
+
+	public void SetLookInput(Vector2 li)
+	{
+		lookInput = li;
+	}
+
+	public void SetAimPoint(Vector3 v)
+	{
+		aimPoint = v;
+	}
+
+	public void SetRotationRoot(Transform t)
+	{
+		rotationRoot = t;
 	}
 }

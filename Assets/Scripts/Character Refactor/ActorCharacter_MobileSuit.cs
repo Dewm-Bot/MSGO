@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Mobilesuit_ActorCharacter : ActorCharacter
+public class ActorCharacter_MobileSuit : ActorCharacter
 {
     new protected enum CharacterState
     {
@@ -18,9 +18,6 @@ public class Mobilesuit_ActorCharacter : ActorCharacter
     public Transform legRoot;           // Leg bone, for handling independant movement direction relay.
     public Transform torsoRoot;         // Spine/torso bone, for aiming the upper body
     public Transform headRoot;          // Head bone, for relaying where the player is looking
-
-    public Transform cameraPivot;          // Where our camera will be pivoted around
-    public Camera mainCamera;              // Our primary camera, should be a child of CameraPivot
 
     public TorsoRotationController_Test torso_script;
 
@@ -60,6 +57,8 @@ public class Mobilesuit_ActorCharacter : ActorCharacter
     public float legsCatchUpSpeed = 5f;
     private Quaternion currentTorsoRotation = Quaternion.identity;    // Current torso rotation in local space
 
+    //buh
+
     [Tooltip("If true, torso aiming uses the camera aim ray / aim point (recommended). If false, uses camera forward.")]
     public bool aimTorsoAtAimPoint = true;
 
@@ -68,9 +67,9 @@ public class Mobilesuit_ActorCharacter : ActorCharacter
     // Input System
     public bool firePressed = false;
     public bool fireHeld = false;
-    private bool nextWeaponPressed = false;
-    private bool prevWeaponPressed = false;
-    private bool[] selectWeaponPressed = new bool[6];
+    public bool nextWeaponPressed = false;
+    public bool prevWeaponPressed = false;
+    public bool[] selectWeaponPressed = new bool[6];
 
     // State
     private CharacterState currentState = CharacterState.Walking;
@@ -81,41 +80,15 @@ public class Mobilesuit_ActorCharacter : ActorCharacter
     public Vector3 lastAimPoint;
     private float lastPressTime = 0;
 
-    override protected void AssignControls()
-    {
-		base.AssignControls();
-		controls.Player.BoostForward.performed += ctx => OnBoostForwardPressed();
-		controls.Player.BoostForward.canceled += ctx => OnBoostForwardReleased();
-		controls.Player.BoostUp.performed += ctx => OnBoostUpPressed();
-		controls.Player.BoostUp.canceled += ctx => OnBoostUpReleased();
-        controls.Player.Fire.performed += ctx => OnFirePressed();
-        controls.Player.Fire.canceled += ctx => OnFireReleased();
-
-        controls.Player.NextWeapon.performed += ctx => nextWeaponPressed = true;
-        controls.Player.PrevWeapon.performed += ctx => prevWeaponPressed = true;
-
-        controls.Player.SelectWeapon1.performed += ctx => selectWeaponPressed[0] = true;
-        controls.Player.SelectWeapon1.canceled += ctx => selectWeaponPressed[0] = false;
-        controls.Player.SelectWeapon2.performed += ctx => selectWeaponPressed[1] = true;
-        controls.Player.SelectWeapon2.canceled += ctx => selectWeaponPressed[1] = false;
-        controls.Player.SelectWeapon3.performed += ctx => selectWeaponPressed[2] = true;
-        controls.Player.SelectWeapon3.canceled += ctx => selectWeaponPressed[2] = false;
-        controls.Player.SelectWeapon4.performed += ctx => selectWeaponPressed[3] = true;
-        controls.Player.SelectWeapon4.canceled += ctx => selectWeaponPressed[3] = false;
-        controls.Player.SelectWeapon5.performed += ctx => selectWeaponPressed[4] = true;
-        controls.Player.SelectWeapon5.canceled += ctx => selectWeaponPressed[4] = false;
-        controls.Player.SelectWeapon6.performed += ctx => selectWeaponPressed[5] = true;
-        controls.Player.SelectWeapon6.canceled += ctx => selectWeaponPressed[5] = false;
-    }
-
-    override protected void HandleUpdate()
+    override public void HandleUpdate()
 	{
 		HandleMovement();
 		HandleBoost();
 		HandleAnimation();
+        HandleRotation();
 	}
 
-	override protected void HandleAnimation() 
+	override public void HandleAnimation() 
     {
         if (actorAnim)
         {
@@ -195,7 +168,7 @@ public class Mobilesuit_ActorCharacter : ActorCharacter
 		velocity = desiredMove.normalized * horizontalVelocity + Vector3.up * verticalVelocity; // Build final move vector
 	}
 
-	private void OnBoostForwardPressed()
+    public void OnBoostForwardPressed()
 	{
 		if (boostPool > 0f && !isBoostingForward)
 		{
@@ -204,17 +177,17 @@ public class Mobilesuit_ActorCharacter : ActorCharacter
 		}
 	}
 
-	private void OnBoostForwardReleased() => isBoostingForward = false;
+    public void OnBoostForwardReleased() => isBoostingForward = false;
 
-	private void OnBoostUpPressed()
+    public void OnBoostUpPressed()
 	{
 		if (boostPool > 0f)
 			isBoostingUp = true;
 	}
 
-	private void OnBoostUpReleased() => isBoostingUp = false;
+    public void OnBoostUpReleased() => isBoostingUp = false;
 
-	private void RechargeBoostPool()
+    public void RechargeBoostPool()
 	{
 		if (!isBoostingForward && !isBoostingUp && Time.time - lastBoostUseTime > boostRechargeDelay)
 		{
@@ -246,6 +219,8 @@ public class Mobilesuit_ActorCharacter : ActorCharacter
                 HandleBoostingFiringRotation();
                 break;
         }
+
+        HandleHeadRotation();
     }
 
     // Passive state, entire body rotates in movement direction
@@ -275,8 +250,8 @@ public class Mobilesuit_ActorCharacter : ActorCharacter
     {
         torso_script.enabled = true;
 
-        //modelRoot.rotation = Quaternion.Euler(0,cameraPivot.rotation.y,0);
-        Vector3 lockForward = cameraPivot.forward;
+        //modelRoot.rotation = Quaternion.Euler(0,rotationRoot.rotation.y,0);
+        Vector3 lockForward = rotationRoot.forward;
         lockForward = new Vector3(lockForward.x, 0, lockForward.z);
         Quaternion targetRotation = Quaternion.LookRotation(Vector3.RotateTowards(modelRoot.forward, lockForward, 1, 1));
         modelRoot.rotation = Quaternion.Lerp(modelRoot.rotation, targetRotation, 10.0f * Time.deltaTime);
@@ -295,7 +270,7 @@ public class Mobilesuit_ActorCharacter : ActorCharacter
     {
         torso_script.enabled = false;
 
-        Vector3 moveTarget = moveInput.x * cameraPivot.right + moveInput.y * cameraPivot.forward;
+        Vector3 moveTarget = moveInput.x * rotationRoot.right + moveInput.y * rotationRoot.forward;
         moveTarget = new Vector3(moveTarget.x, 0, moveTarget.z);
         moveTarget = moveTarget.normalized;
 
@@ -316,8 +291,8 @@ public class Mobilesuit_ActorCharacter : ActorCharacter
     {
         torso_script.enabled = true;
 
-        //modelRoot.rotation = Quaternion.Euler(0,cameraPivot.rotation.y,0);
-        Vector3 lockForward = cameraPivot.forward;
+        //modelRoot.rotation = Quaternion.Euler(0,rotationRoot.rotation.y,0);
+        Vector3 lockForward = rotationRoot.forward;
         lockForward = new Vector3(lockForward.x, 0, lockForward.z);
         Quaternion targetRotation = Quaternion.LookRotation(Vector3.RotateTowards(modelRoot.forward, lockForward, 1, 1));
         modelRoot.rotation = Quaternion.Lerp(modelRoot.rotation, targetRotation, 10.0f * Time.deltaTime);
@@ -334,11 +309,11 @@ public class Mobilesuit_ActorCharacter : ActorCharacter
     {
         // Smoothly rotate head to targets
         Quaternion targetHeadRotation = modelRoot.rotation;
-        float headDot = Vector3.Dot(cameraPivot.forward, modelRoot.forward); // check if the model is facing the same direction as the camera
+        float headDot = Vector3.Dot(rotationRoot.forward, modelRoot.forward); // check if the model is facing the same direction as the camera
         bool headTrack = (headDot >= -0.1f) ? true : false; // if the model is not parallel (1.0) or perpendicular (0.0, -0.1 for tolerance issues) with the forward direction, disable headtracking
         if (headTrack)
         {
-            Vector3 targetHeadVector = Vector3.RotateTowards(headRoot.forward, cameraPivot.forward, 1, 1);
+            Vector3 targetHeadVector = Vector3.RotateTowards(headRoot.forward, rotationRoot.forward, 1, 1);
             targetHeadRotation = Quaternion.LookRotation(targetHeadVector);
         }
         headRoot.rotation = Quaternion.Lerp(headRoot.rotation, targetHeadRotation, 10.0f * Time.deltaTime);
@@ -420,7 +395,7 @@ public class Mobilesuit_ActorCharacter : ActorCharacter
         actorAnim.SetBool("SwapWeapon", false);
     }
 
-    private void OnFirePressed()
+    public void OnFirePressed()
     {
         firePressed = true;
         lastPressTime = Time.time;
@@ -437,7 +412,7 @@ public class Mobilesuit_ActorCharacter : ActorCharacter
         }
     }
 
-    private void OnFireReleased()
+    public void OnFireReleased()
     {
         fireHeld = false;
         firePressed = false;
@@ -455,34 +430,13 @@ public class Mobilesuit_ActorCharacter : ActorCharacter
         if (firePressed || fireHeld)
         {
             actorAnim.SetBool("IsFiring", true);
-            lastAimPoint = CalculateAimPoint();
+            lastAimPoint = aimPoint;
             lastFireTime = Time.time;
         }
         else
         {
             actorAnim.SetBool("IsFiring", false);
         }
-    }
-
-    // Raycast from camera center to find aimpoint, handled separately from torso
-    private Vector3 CalculateAimPoint()
-    {
-        Ray ray = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-        RaycastHit[] hits = Physics.RaycastAll(ray, 1000f, ~0, QueryTriggerInteraction.Ignore);
-        if (hits.Length > 0)
-        {
-            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-            for (int i = 0; i < hits.Length; i++)
-            {
-                Collider hitCollider = hits[i].collider;
-                if (hitCollider != null && !hitCollider.transform.IsChildOf(transform))
-                {
-                    return hits[i].point;
-                }
-            }
-        }
-
-        return ray.GetPoint(1000f);
     }
 
     public void SetMuzzle(Transform m)
