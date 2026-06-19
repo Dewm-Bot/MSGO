@@ -11,7 +11,7 @@ namespace WeaponSystem
 
         [SerializeField] float accuracy;
 
-        private void Start()
+        private void Awake()
         {
             projectile_behavior = projectile.GetComponent<Projectile>();
         }
@@ -22,7 +22,7 @@ namespace WeaponSystem
 
             Transform shot = Instantiate(projectile).transform;
             shot.position = muzzle.position;
-            shot.rotation = muzzle.rotation;
+            shot.rotation = Quaternion.LookRotation(aimPoint-muzzle.position,Vector3.up);
         }
 
         public Transform stored_hardpoint;

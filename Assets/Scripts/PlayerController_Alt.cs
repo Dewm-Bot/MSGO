@@ -643,6 +643,7 @@ namespace PlayerSystem
                 return;
 
             var currentWep = weapons[currentWeaponIndex];
+            if(currentWep.GetType() == typeof(Gun))
             currentWep.Activate(firePressed, fireHeld); // calls the script on the current weapon to actually trigger weapon behavior (firing, spawning drones, whatever)
 
             // Always calculate aim point when firing or holding fire

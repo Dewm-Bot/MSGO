@@ -105,7 +105,7 @@ namespace WeaponSystem
 
             Transform shot = Instantiate(projectile_charge).transform;
             shot.position = muzzle.position;
-            shot.rotation = muzzle.rotation;
+            shot.rotation = Quaternion.LookRotation(aimPoint - muzzle.position, Vector3.up);
         }
 
         public void FireBurst()
@@ -121,7 +121,7 @@ namespace WeaponSystem
             {
                 Transform shot = Instantiate(projectile_charge).transform;
                 shot.position = muzzle.position;
-                shot.rotation = muzzle.rotation;
+                shot.rotation = Quaternion.LookRotation(aimPoint - muzzle.position, Vector3.up);
             }
         }
 

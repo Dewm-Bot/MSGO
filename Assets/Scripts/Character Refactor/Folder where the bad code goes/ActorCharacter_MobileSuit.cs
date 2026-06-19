@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -65,6 +66,7 @@ public class ActorCharacter_MobileSuit : ActorCharacter
     public bool aimTorsoAtAimPoint = true;
 
     private Quaternion initialTorsoLocalRot;
+    private Vector3 initialRotationRootPos;
 
     // Input System
     public bool firePressed = false;
@@ -72,6 +74,7 @@ public class ActorCharacter_MobileSuit : ActorCharacter
     public bool nextWeaponPressed = false;
     public bool prevWeaponPressed = false;
     public bool[] selectWeaponPressed = new bool[6];
+    bool canFire = true;
 
     // State
     private CharacterState currentState = CharacterState.Walking;
@@ -91,16 +94,48 @@ public class ActorCharacter_MobileSuit : ActorCharacter
         healthBarUI.SetHealth(currentHealth, maxHealth);
     }
 
+    private void Start()
+    {
+        initialRotationRootPos = rotationRoot.localPosition;
+    }
+
     override public void HandleUpdate()
 	{
-		HandleMovement();
+        UpdateState();
+        HandleMovement();
 		HandleBoost();
 		HandleAnimation();
         HandleRotation();
         RechargeBoostPool();
+        HandleWeapon();
+        AddCameraLag();
     }
 
-	override public void HandleAnimation() 
+    #region State Management
+
+    private void UpdateState()
+    {
+        bool isBoosting = isBoostingForward || isBoostingUp;
+        bool isFiring = firePressed || fireHeld || (Time.time - lastFireTime < firingStateTimeout);
+
+        if (isBoosting && isFiring)
+            currentState = CharacterState.BoostingFiring;
+        else if (isBoosting)
+            currentState = CharacterState.Boosting;
+        else if (isFiring)
+            currentState = CharacterState.Firing;
+        else
+            currentState = CharacterState.Walking;
+    }
+
+    #endregion
+
+    private void AddCameraLag()
+    {
+        rotationRoot.localPosition = Vector3.Lerp(rotationRoot.localPosition, initialRotationRootPos - (velocity * 0.1f), 10.0f * Time.deltaTime);
+    }
+
+    override public void HandleAnimation() 
     {
         if (actorAnim)
         {
@@ -112,7 +147,9 @@ public class ActorCharacter_MobileSuit : ActorCharacter
         }
     }
 
-	void HandleBoost() 
+    #region Boost Behavior
+
+    void HandleBoost() 
     {
 		if (isBoostingForward && boostPool > 0f)
 		{
@@ -208,9 +245,9 @@ public class ActorCharacter_MobileSuit : ActorCharacter
 			boostBarUI.SetBoost(boostPool, maxBoostPool);
 		}
 	}
+    #endregion
 
     #region Rotation Handling
-
     private void HandleRotation()
     {
         if (!modelRoot || !torsoRoot)
@@ -219,15 +256,19 @@ public class ActorCharacter_MobileSuit : ActorCharacter
         switch (currentState)
         {
             case CharacterState.Walking:
+                Debug.Log("walking - idle");
                 HandleWalkingRotation();
                 break;
             case CharacterState.Firing:
+                Debug.Log("walking - firing");
                 HandleFiringRotation();
                 break;
             case CharacterState.Boosting:
+                Debug.Log("boosting - idle");
                 HandleBoostingRotation();
                 break;
             case CharacterState.BoostingFiring:
+                Debug.Log("boosting - firing");
                 HandleBoostingFiringRotation();
                 break;
         }
@@ -371,6 +412,14 @@ public class ActorCharacter_MobileSuit : ActorCharacter
 
     #region Weapon Selection & Firing
 
+    private void HandleWeapon() 
+    {
+        HandleWeaponSelection();
+        CheckFireHeld();
+        if(canFire)
+            HandleFiring();
+    }
+
     private void HandleWeaponSelection()
     {
         if (nextWeaponPressed)
@@ -399,12 +448,22 @@ public class ActorCharacter_MobileSuit : ActorCharacter
     private void SelectWeapon(int index)
     {
         if (index == currentWeaponIndex || index < 0 || index >= weapons.Count) return;
-        actorAnim.SetBool("SwapWeapon", true);
+        
+        StartCoroutine(WeapSwapAnimWait());
         weapons[currentWeaponIndex]?.OnDeselect();  // deselect previous weapon
         muzzleTransform = null;                     // nullify the muzzle transform to forego torso adjustments
         currentWeaponIndex = index;                 // update index to current desired weapon
         weapons[currentWeaponIndex]?.OnSelect();    // select the current weapon
+        
+    }
+
+    IEnumerator WeapSwapAnimWait() 
+    {
+        actorAnim.SetBool("SwapWeapon", true);
+        canFire = false;
+        yield return new WaitUntil(() => actorAnim.GetCurrentAnimatorStateInfo(1).normalizedTime >= 1);
         actorAnim.SetBool("SwapWeapon", false);
+        canFire = true;
     }
 
     public void OnFirePressed()
@@ -436,6 +495,16 @@ public class ActorCharacter_MobileSuit : ActorCharacter
             return;
 
         var currentWep = weapons[currentWeaponIndex];
+        if (currentWep.GetType().IsSubclassOf(typeof(Gun)))
+        {
+            Debug.Log("is gun.");
+            Gun curr_gun = (Gun)currentWep;
+            curr_gun.aimPoint = aimPoint;
+        }
+        else 
+        {
+            Debug.Log("is not gun.");
+        }
         currentWep.Activate(firePressed, fireHeld); // calls the script on the current weapon to actually trigger weapon behavior (firing, spawning drones, whatever)
 
         // Always calculate aim point when firing or holding fire

@@ -8,6 +8,8 @@ public class Gun : Equipment
 	[SerializeField] public float damage;
 	[SerializeField] public float ammo;
 
+	public Vector3 aimPoint;
+
 	bool can_fire = true;
 
 	// determines what happens when inputs are pressed, things like charging, mode switching, etc. can go here

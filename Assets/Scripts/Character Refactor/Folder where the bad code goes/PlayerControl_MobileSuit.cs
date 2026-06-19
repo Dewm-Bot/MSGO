@@ -55,6 +55,7 @@ public class PlayerControl_MobileSuit : MonoBehaviour
         controls.Player.BoostForward.canceled += ctx => ActorMS.OnBoostForwardReleased();
         controls.Player.BoostUp.performed += ctx => ActorMS.OnBoostUpPressed();
         controls.Player.BoostUp.canceled += ctx => ActorMS.OnBoostUpReleased();
+
         ActorMS.SetRotationRoot(cameraPivot);
     }
 
