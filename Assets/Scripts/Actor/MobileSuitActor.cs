@@ -13,11 +13,11 @@ public class MobileSuitActor : MonoBehaviour
     public Transform torsoRoot;         // Spine/torso bone
     public Transform headRoot;          // Head bone
     public Transform muzzleTransform;      // Where shots originate
-    
+
     [Header("Components")]
     public CharacterController characterController;
     public Animator animator;
-    
+
     [Header("UI References")]
     public BoostBar boostBarUI;
     public HealthBar healthBarUI;
@@ -49,7 +49,7 @@ public class MobileSuitActor : MonoBehaviour
     public bool nextWeaponPressed = false;
     public bool prevWeaponPressed = false;
     public bool[] selectWeaponPressed = new bool[6];
-    
+
     public enum ActorState { Walking, Firing, Boosting, BoostingFiring }
     public ActorState CurrentState = ActorState.Walking;
     private float lastFireTime = 0f;
@@ -71,7 +71,7 @@ public class MobileSuitActor : MonoBehaviour
 
         currentHealth = stats.maxHealth;
         boostPool = stats.maxBoostPool;
-        
+
         boostBarUI.SetBoost(boostPool, stats.maxBoostPool);
         healthBarUI.SetHealth(currentHealth, stats.maxHealth);
 
@@ -195,10 +195,10 @@ public class MobileSuitActor : MonoBehaviour
         if (animator)
         {
             float moveMag = new Vector2(MoveIntent.x, MoveIntent.y).magnitude;
-            animator.SetFloat(\"MoveSpeed\", moveMag);
-            animator.SetFloat(\"DotForward\", Vector3.Dot(desiredMove.normalized, modelRoot.forward));
-            animator.SetBool(\"IsBoosting\", isBoostingForward || isBoostingUp);
-            animator.SetInteger(\"CharacterState\", (int)CurrentState);
+            animator.SetFloat("MoveSpeed", moveMag);
+            animator.SetFloat("DotForward", Vector3.Dot(desiredMove.normalized, modelRoot.forward));
+            animator.SetBool("IsBoosting", isBoostingForward || isBoostingUp);
+            animator.SetInteger("CharacterState", (int)CurrentState);
         }
     }
 
