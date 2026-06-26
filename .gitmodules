@@ -1,0 +1,3 @@
+[submodule "Assets/Imported/GD"]
+	path = Assets/Imported/GD
+	url = https://git.dewm.ca/dewm/GD.git
